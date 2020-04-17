@@ -3,9 +3,11 @@ clear
 %% Точный алгоритм пересчёта координат и составляющих вектора скорости центра масс НКА на заданный момент времени шкалы МВД
 %% Эфемериды НКА 21 системы ГЛОНАСС в системе ПЗ-90.11
 %% Дата 2020/02/26 13:45:18
-Tb = 13*60*60 + 45*60 + 18; %% с
+tb = 13*60*60 + 45*60 + 18; %% с
 Toe = 12*60*60;
 Tof = 24*60*60;
+Ts = 1;
+ti = Toe:Ts:Tof;
 X = -11998338.38; %% м
 Y = 2268666.50; %% м
 Z = 22399278.81; %% м
@@ -27,8 +29,23 @@ em = 0.054900489;
 im = 0.0898041080;
 as = 1.49598*10^8;
 es = 0.016719;
+re = 6371e3;
 N4 = 7; %% номер текущего четырёхлетия
 Nt = 57; %% номер текущих суток
+%% Начальные условия
+x0 = X;
+y0 = Y;
+z0 = Z;
+VX0 = VX;
+VY0 = VY;
+VZ0 = VZ;
+r0 = sqrt(X^2 + Y^2 + Z^2);
+GM1 = GM/r0^2;
+x01 = x0/r0;
+y01 = y0/r0;
+z01 = z0/r0;
+p = ae/r0;
+res0 = [ x0 y0 z0 VX0 VY0 VZ0 ];
 %% Расчёт текущей юлианской даты
 JD0 = 1461*(N4 - 1) + Nt + 245008.5 - (Nt -3)/25;
 %% Номер юлианского дня для текущей даты
@@ -39,9 +56,16 @@ ERA = 2*pi*(0.7790572732640 + 1.00273781191135448*(JD0 - 2451545));
 GMST = ERA + 0.0000000703270726 + 0.0223603658710194*T_delta + 0.0000067465784654*T_delta^2 - 0.0000000000021332*T_delta^3 - 0.0000000001452308*T_delta^4 - 0.0000000000001784*T_delta^5;
 %% Перевод в п/у инерциальную геоцентрическую систему ускорений
 S = GMST + omegaz*(tb -10800);
-(Jxom + Jxos) = AX*cos(S) - AY*sin(S);
-(Jyom + Jyos) = AX*sin(S) + AY*cos(S);
-(Jzom + Jzos) = AZ;
+Jxoms = AX*cos(S) - AY*sin(S);
+Jyoms = AX*sin(S) + AY*cos(S);
+Jzoms = AZ;
+%% Ускорения от лунных и солнечных гравитационных возмущений
+%% Лунные ускорения
+T = (JD0 + (tb - 10800)/86400 -2451545)/36525; %% время от эпохи 2000 года
+qum = 2.3555557435 + 8328.6914257190*T + 0.0001545547*T^2; %% средняя аномалия Луны
+omegam = 2.1824391966 - 33.7570459536*T + 0.0000362262*T^2; %% средняя долгота восходящего узла Луны
+gstrih = 1.4547885346 + 71.0176852437*T - 0.0001801481*T^2; %% средняя долгота перигея Луны
+eps = 0.4090926006 -0.0002270711*T; %% средний наклон эклиптики к экватору
 %% Эксцентричная аномалия Луны
 Em0 = qum;
 Em = qum + em*sin(Em0);
@@ -50,21 +74,6 @@ while abs(Em - Em0) < 10^-8
 end
 sintetam = ((sqrt(1 - em^2))*sin(Em))/(1 - em*cos(Em));
 costetam = (cos(Em) - em)/(1 - em*cos(Em));
-%% Эксцентричная аномалия Солнца
-Es0 = qus;
-Es = qus + es*sin(Es0);
-while abs(Es - Es0) < 10^-8
-    Es = qus + es*sin(Es);
-end
-sintetas = ((sqrt(1 - es^2))*sin(Es))/(1 - es*cos(Es));
-costetas = (cos(Es) - es)/(1 - es*cos(Es));
-%% Ускорения от лунных и солнечных гравитационных возмущений
-%% Лунные ускорения
-T = (JD0 + (tb - 10800)/86400 -2451545)/36525; %% время от эпохи 2000 года
-qum = 2.3555557435 + 8328.6914257190*T + 0.0001545547*T^2; %% средняя аномалия Луны
-omegam = 2.1824391966 - 33.7570459536*T + 0.0000362262*T^2; %% средняя долгота восходящего узла Луны
-gstrih = 1.4547885346 + 71.0176852437*T - 0.0001801481*T^2; %% средняя долгота перигея Луны
-eps = 0.4090926006 -0.0002270711*T; %% средний наклон эклиптики к экватору
 ksi11 = sin(omegam)*cos(omegam*(1 - cos(im)));
 ksi12 = 1 - sin(omegam*(1 - cos(im)))^2;
 ksi = 1 - cos(omegam*(1 - cos(im)))^2;
@@ -85,14 +94,22 @@ Gm1 = Gm/rm^2;
 delta_m = ((ksim - x0m)^2 + (etam - y0m)^2 + (dzetam - z0m)^2)^(3/2);
 jxom = Gm1*((ksim - x0m)/delta_m - ksim);
 jyom = Gm1*((etam - y0m)/delta_m - etam);
-jzom = Gm1*((dzetam - zom)/delta_m - dzetam);
+jzom = Gm1*((dzetam - z0m)/delta_m - dzetam);
 %% Солнечные ускорения
 qus = 6.2400601269 + 628.3019551714*T - 0.0000026820*T^2;
+%% Эксцентричная аномалия Солнца
+Es0 = qus;
+Es = qus + es*sin(Es0);
+while abs(Es - Es0) < 10^-8
+    Es = qus + es*sin(Es);
+end
+sintetas = ((sqrt(1 - es^2))*sin(Es))/(1 - es*cos(Es));
+costetas = (cos(Es) - es)/(1 - es*cos(Es));
 omegas = -7.6281824375 + 0.0300101976*T + 0.0000079741*T^2;
 ksis = costetas*cos(omegas) - sintetas*sin(omegas);
 etas = (sintetas*cos(omegas) + costetas*sin(omegas))*cos(eps);
 dzetas = (sintetas*cos(omegas) + costetas*sin(omegas))*sin(eps);
-rs = as*(1 -es*cos(Es);
+rs = as*(1 -es*cos(Es));
 x0s = x0/rs;
 y0s = y0/rs;
 z0s = z0/rs;
@@ -100,21 +117,7 @@ Gs1 = Gs/rs^2;
 delta_s = ((ksis - x0s)^2 + (etas - y0s)^2 + (dzetas - z0s)^2)^(3/2);
 jxos = Gs1*((ksis - x0s)/delta_s - ksis);
 jyos = Gs1*((etas - y0s)/delta_s - etas);
-jzos = Gs1*((dzetas - zos)/delta_s - dzetas);
-%% Начальные условия
-x0 = X;
-y0 = Y;
-z0 = Z;
-VX0 = VX;
-VY0 = VY;
-VZ0 = VZ;
-r0 = sqrt(x^2 + y^2 + z^2);
-GM1 = GM/r0^2;
-x01 = x0/r0;
-y01 = y0/r0;
-z01 = z0/r0;
-p = ae/r0;
-res0 = [ x0 y0 z0 VX0 VY0 VZ0 ];
+jzos = Gs1*((dzetas - z0s)/delta_s - dzetas);
 %% Пересчёт координат в ПЗ-90
 x = x0*cos(S) + y0*sin(S);
 y = -x0*sin(S) + y0*cos(S);
@@ -124,16 +127,22 @@ VY = -VX0*sin(S) + VY*cos(S) - omegaz*x;
 VZ = VZ0;
 S = GMST + omegaz*(ti - 10800);
 %% Система уравнений движения спутника
-function res = diffs(t, x0, y0, z0, VX0, VY0, VZ0)
-dx0 = VX0;
-dy0 = VY0;
-dz0 = VZ0;
-dVX0 = -GM1*x01 - 1.5*J02*GM1*x01*(p^2)*(1 - 5*z01^2) + jxos + jxom;
-dVY0 = -GM1*y01 - 1.5*J02*GM1*y01*(p^2)*(1 - 5*z01^2) + jyos + jyom;
-dVZ0 = -GM1*z01 - 1.5*J02*GM1*z01*(p^2)*(3 - 5*z01^2) + jzos + jzom;
+function dres = diffs(t, res)
+dres = res(:);
+dres(1) = res(1);
+dres(2) = res(2);
+dres(3) = res(3);
+
+dres(4) = -GM1*x01 - 1.5*J02*GM1*x01*(p^2)*(1 - 5*z01^2) + jxos + jxom;
+dres(5) = -GM1*y01 - 1.5*J02*GM1*y01*(p^2)*(1 - 5*z01^2) + jyos + jyom;
+dres(6) = -GM1*z01 - 1.5*J02*GM1*z01*(p^2)*(3 - 5*z01^2) + jzos + jzom;
 %% Метод Рунге-Кутта 4 порядка
-interval = Toe:1:Tof;
-[t, res] = ode45(interval, res0);
+[t, res] = ode45('diffs', tb:-Ts:ti(1), res0);
+res1 = res(end:-1:2,:);
+[t, res] = ode45('diffs', tb:Ts:ti(end), res0);
+res1 = [res1, res];
 end
+
+
 
 
