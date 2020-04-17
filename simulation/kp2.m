@@ -126,7 +126,14 @@ VX = VX0*cos(S) + VY*sin(S) + omegaz*y;
 VY = -VX0*sin(S) + VY*cos(S) - omegaz*x;
 VZ = VZ0;
 S = GMST + omegaz*(ti - 10800);
-%% Система уравнений движения спутника
+%% Переход к сферическим координатам
+r = sqrt(x^2 + y^2 + z^2);
+teta = acos(z/r);
+phi = atan2(y, x);
+polarplot(phi,teta*180/pi, 'r')
+ax = polaraxes;
+polarplot(ax,pi,teta*180/pi, 'r')
+%% Система дифф уравнений
 function dres = diffs(t, res)
 dres = res(:);
 dres(1) = res(1);
@@ -136,13 +143,11 @@ dres(3) = res(3);
 dres(4) = -GM1*x01 - 1.5*J02*GM1*x01*(p^2)*(1 - 5*z01^2) + jxos + jxom;
 dres(5) = -GM1*y01 - 1.5*J02*GM1*y01*(p^2)*(1 - 5*z01^2) + jyos + jyom;
 dres(6) = -GM1*z01 - 1.5*J02*GM1*z01*(p^2)*(3 - 5*z01^2) + jzos + jzom;
-%% Метод Рунге-Кутта 4 порядка
+%% Метод Рунге-Кутты
+interval = Toe:1:Tof;
+[t, res] = ode45(interval, res0);
 [t, res] = ode45('diffs', tb:-Ts:ti(1), res0);
 res1 = res(end:-1:2,:);
 [t, res] = ode45('diffs', tb:Ts:ti(end), res0);
 res1 = [res1, res];
 end
-
-
-
-
