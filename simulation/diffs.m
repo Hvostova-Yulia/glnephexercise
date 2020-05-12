@@ -16,9 +16,9 @@ r0=ae/r;
 p = ae/r0;
 
 dres = res(:);
-dres(1) = res(1);
-dres(2) = res(2);
-dres(3) = res(3);
+dres(1) = res(4);
+dres(2) = res(5);
+dres(3) = res(6);
 
 dres(4) = -GM1*x01 - 1.5*J02*GM1*x01*(p^2)*(1 - 5*z01^2);
 dres(5) = -GM1*y01 - 1.5*J02*GM1*y01*(p^2)*(1 - 5*z01^2);
