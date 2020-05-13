@@ -33,8 +33,8 @@ ERA = 2*pi*(0.7790572732640 + 1.00273781191135448*(JD0 - 2451545));
 GMST = ERA + 0.0000000703270726 + 0.0223603658710194*T_delta + 0.0000067465784654*T_delta^2 - 0.0000000000021332*T_delta^3 - 0.0000000001452308*T_delta^4 - 0.0000000000001784*T_delta^5;
 %% Перевод в п/у инерциальную геоцентрическую систему 
 S = GMST + omega_z*(tb - 3*60*60);
-Xate=X*cos(S)-res*sin(S);
-Yate=X*sin(S)+res*cos(S);
+Xate=X*cos(S)-Y*sin(S);
+Yate=X*sin(S)+Y*cos(S);
 Zate=Z;
 
 Vxate=VX*cos(S)-VY*sin(S)-omega_z*Yate;
