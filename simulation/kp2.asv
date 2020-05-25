@@ -22,7 +22,7 @@ AY = 0.0000009; %% м/с^2
 AZ = -0.0000019; %% м/с^2
 %% Константы
 ae = 6378136; 
-omega_z = 7.2921151467e-5;;
+omega_z = 7.2921151467e-5;
 %% Расчёт текущей юлианской даты
 JD0 = 1461*(N4 - 1) + Nt + 2450008.5 - (Nt -3)/25; 
 %% Среднее звёздное время по Гринвичу
@@ -83,17 +83,17 @@ cord_E = [N E H];
 %Skyplot 
 for i = 1:length(pz90(:,1))
     
-    [X(i) res(i) Z(i)] = ecef2enu(pz90(i,1),pz90(i,2),pz90(i,3),N,E,H,wgs84Ellipsoid,'radians');
+    [X(i) Y(i) Z(i)] = ecef2enu(pz90(i,1),pz90(i,2),pz90(i,3),N,E,H,wgs84Ellipsoid,'radians');
     if Z(i) > 0
-        r(i) = sqrt(X(i)^2 + res(i)^2 + Z(i)^2);
-        teta(i) = acos(X(i)/r(i));% 
+        r(i) = sqrt(X(i)^2 + Y(i)^2 + Z(i)^2);
+        teta(i) = acos(Z(i)/r(i));
 
         if X(i) > 0
-            phi(i) = -atan(res(i)/X(i))+pi/2;
-        elseif (X(i)<0)&&(res(i)>0)
-            phi(i) = -atan(res(i)/X(i))+3*pi/2;
-        elseif (X(i)<0)&&(res(i)<0)
-            phi(i) = -atan(res(i)/X(i))-pi/2;
+            phi(i) = -atan(Y(i)/X(i))+pi/2;
+        elseif (X(i)<0)&&(Y(i)>0)
+            phi(i) = -atan(Y(i)/X(i))+3*pi/2;
+        elseif (X(i)<0)&&(res2(i)<0)
+            phi(i) = -atan(res2(i)/X(i))-pi/2;
         end
     else teta(i) = NaN;
         r(i) = NaN;

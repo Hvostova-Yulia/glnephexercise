@@ -22,7 +22,7 @@ AY = 0.0000009; %% м/с^2
 AZ = -0.0000019; %% м/с^2
 %% Константы
 ae = 6378136; 
-omega_z = 7.2921151467e-5;;
+omega_z = 7.2921151467e-5;
 %% Расчёт текущей юлианской даты
 JD0 = 1461*(N4 - 1) + Nt + 2450008.5 - (Nt -3)/25; 
 %% Среднее звёздное время по Гринвичу
@@ -86,7 +86,7 @@ for i = 1:length(pz90(:,1))
     [X(i) Y(i) Z(i)] = ecef2enu(pz90(i,1),pz90(i,2),pz90(i,3),N,E,H,wgs84Ellipsoid,'radians');
     if Z(i) > 0
         r(i) = sqrt(X(i)^2 + Y(i)^2 + Z(i)^2);
-        teta(i) = acos(X(i)/r(i));% 
+        teta(i) = acos(Z(i)/r(i));
 
         if X(i) > 0
             phi(i) = -atan(Y(i)/X(i))+pi/2;
@@ -102,25 +102,19 @@ for i = 1:length(pz90(:,1))
 end
 %Построение графиков
 figure(1)
-[X,Y,Z]=sphere(50);
+[Xx,Yy,Zz]=sphere(50);
 Rz=6371000;%радиус Земли
-surf(Rz*X,Rz*Y,Rz*Z)
+surf(Rz*Xx,Rz*Yy,Rz*Zz)
 hold on
 grid on
 plot3(res1(:,1), res1(:,2), res1(:,3), 'b')
-title('Траектория движения спутника ГЛОНАСС №21')
 xlabel('Ось Х, м')
 ylabel('Ось Y, м')
 zlabel('Ось Z, м')
-hold off
-legend('Земля','ПЗ-90', 'Инерциальная СК');
-
-figure(2)
-surf(Rz*X,Rz*Y,Rz*Z)
-hold on
+surf(Rz*Xx,Rz*Yy,Rz*Zz)
 grid on
 plot3(pz90(:,1),pz90(:,2),pz90(:,3),'r')
-title({'Траектория движения КА №21 ГЛОНАСС,' ; 'в системе координат ПЗ-90'})
+title({'Траектория движения спутника ГЛОНАСС №21'})
 xlabel('Ось Х, м')
 ylabel('Ось Y, м')
 zlabel('Ось Z, м')
